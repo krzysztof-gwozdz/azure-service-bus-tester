@@ -1,21 +1,16 @@
+using Azure.Messaging.ServiceBus.Administration;
+using Microsoft.Azure.ServiceBus.Management;
+
 namespace AzureServiceBus.Data;
 
 public class Repository
 {
-    protected async Task<List<T>> GetAll<T>(Func<int, int, CancellationToken, Task<IList<T>>> getFunc, CancellationToken cancellationToken)
-    {
-        var items = new List<T>();
-        const int count = 100;
-        var skip = 0;
-        bool continueLoop;
-        do
-        {
-            var queues = (await getFunc(count, skip, cancellationToken)).ToArray();
-            items.AddRange(queues);
-            skip += count;
-            continueLoop = queues.Length == count;
-        } while (continueLoop);
+    protected readonly ManagementClient ManagementClient;
+    protected readonly ServiceBusAdministrationClient ServiceBusAdministrationClient;
 
-        return items.ToList();
+    protected Repository(string connectionString)
+    {
+        ManagementClient = new ManagementClient(connectionString);
+        ServiceBusAdministrationClient = new ServiceBusAdministrationClient(connectionString);
     }
 }

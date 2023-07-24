@@ -1,38 +1,34 @@
-﻿using Microsoft.Azure.ServiceBus.Management;
-
-namespace AzureServiceBus.Data;
+﻿namespace AzureServiceBus.Data;
 
 public class TopicsRepository : Repository
 {
-    private readonly ManagementClient _managementClient;
-
-    public TopicsRepository(ManagementClient managementClient)
+    public TopicsRepository(string connectionString) : base(connectionString)
     {
-        _managementClient = managementClient;
     }
 
     public async Task<Topic[]> Get(string[]? filters, CancellationToken cancellationToken)
     {
-        var topicDescriptions = await GetAll((count, skip, _) => _managementClient.GetTopicsAsync(count, skip, cancellationToken), cancellationToken);
-        if (filters is not null)
-            topicDescriptions = topicDescriptions.Where(topicDescription => filters.All(filter => topicDescription.Path.ToLower().Contains(filter))).ToList();
         var topics = new List<Topic>();
-        foreach (var topicDescription in topicDescriptions)
+        await foreach (var topicRuntimeProperties in ServiceBusAdministrationClient.GetTopicsRuntimePropertiesAsync(cancellationToken))
         {
-            topics.Add(new Topic(
-                topicDescription.Path,
-                await GetSubscriptions(topicDescription.Path)
-            ));
+            if (filters is not null && filters.All(filter => topicRuntimeProperties.Name.ToLower().Contains(filter)))
+                topics.Add(new Topic(topicRuntimeProperties.Name, await GetSubscriptions(topicRuntimeProperties.Name)));
         }
-
         return topics.ToArray();
     }
 
     private async Task<Subscription[]> GetSubscriptions(string topicPath)
     {
-        var subscriptionDescriptions = await _managementClient.GetSubscriptionsAsync(topicPath);
-        return subscriptionDescriptions
-            .Select(subscriptionDescription => new Subscription(subscriptionDescription.SubscriptionName, subscriptionDescription.ForwardTo.Substring(subscriptionDescription.ForwardTo.IndexOf("net/", StringComparison.InvariantCultureIgnoreCase) + 4)))
-            .ToArray();
+        var subscriptions = new List<Subscription>();
+        await foreach (var subscriptionRuntimeProperties in ServiceBusAdministrationClient.GetSubscriptionsRuntimePropertiesAsync(topicPath))
+        {
+            var subscriptionDescription = await ManagementClient.GetSubscriptionAsync(topicPath, subscriptionRuntimeProperties.SubscriptionName);
+            subscriptions.Add(new Subscription(
+                subscriptionRuntimeProperties.SubscriptionName,
+                subscriptionDescription.ForwardTo[(subscriptionDescription.ForwardTo.IndexOf("net/", StringComparison.InvariantCultureIgnoreCase) + 4)..],
+                subscriptionRuntimeProperties.ActiveMessageCount,
+                subscriptionRuntimeProperties.DeadLetterMessageCount));
+        }
+        return subscriptions.ToArray();
     }
 }
