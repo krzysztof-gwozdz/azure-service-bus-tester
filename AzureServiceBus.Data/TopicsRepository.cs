@@ -14,6 +14,7 @@ public class TopicsRepository : Repository
             if (filters is not null && filters.All(filter => topicRuntimeProperties.Name.ToLower().Contains(filter)))
                 topics.Add(new Topic(topicRuntimeProperties.Name, await GetSubscriptions(topicRuntimeProperties.Name)));
         }
+
         return topics.ToArray();
     }
 
@@ -29,6 +30,7 @@ public class TopicsRepository : Repository
                 subscriptionRuntimeProperties.ActiveMessageCount,
                 subscriptionRuntimeProperties.DeadLetterMessageCount));
         }
+
         return subscriptions.ToArray();
     }
 }
