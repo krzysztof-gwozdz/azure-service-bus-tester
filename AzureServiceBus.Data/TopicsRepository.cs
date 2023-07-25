@@ -12,19 +12,24 @@ public class TopicsRepository : Repository
         await foreach (var topicRuntimeProperties in ServiceBusAdministrationClient.GetTopicsRuntimePropertiesAsync(cancellationToken))
         {
             if (configuration.Filters is not null && configuration.Filters.All(filter => topicRuntimeProperties.Name.ToLower().Contains(filter)))
-                topics.Add(Topic.Create(topicRuntimeProperties, await GetSubscriptions(topicRuntimeProperties.Name, configuration.Fields), configuration.Fields));
+            {
+                var subscriptions = await GetSubscriptions(configuration, topicRuntimeProperties.Name);
+                if (subscriptions.Any())
+                    topics.Add(Topic.Create(topicRuntimeProperties, subscriptions, configuration.Fields));
+            }
         }
 
         return topics.ToArray();
     }
 
-    private async Task<Subscription[]> GetSubscriptions(string topicPath, string[]? fields)
+    private async Task<Subscription[]> GetSubscriptions(Configuration configuration, string topicPath)
     {
         var subscriptions = new List<Subscription>();
         await foreach (var subscriptionRuntimeProperties in ServiceBusAdministrationClient.GetSubscriptionsRuntimePropertiesAsync(topicPath))
         {
             var subscriptionProperties = await ServiceBusAdministrationClient.GetSubscriptionAsync(topicPath, subscriptionRuntimeProperties.SubscriptionName);
-            subscriptions.Add(Subscription.Create(subscriptionRuntimeProperties, subscriptionProperties, fields));
+            if (!configuration.NotEmpty || subscriptionRuntimeProperties.ActiveMessageCount + subscriptionRuntimeProperties.DeadLetterMessageCount > 0)
+                subscriptions.Add(Subscription.Create(subscriptionRuntimeProperties, subscriptionProperties, configuration.Fields));
         }
 
         return subscriptions.ToArray();

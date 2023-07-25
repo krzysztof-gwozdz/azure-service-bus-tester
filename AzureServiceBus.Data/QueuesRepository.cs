@@ -11,7 +11,9 @@ public class QueuesRepository : Repository
         var queues = new List<Queue>();
         await foreach (var queueRuntimeProperties in ServiceBusAdministrationClient.GetQueuesRuntimePropertiesAsync(cancellationToken))
         {
-            if (configuration.Filters is not null && configuration.Filters.All(filter => queueRuntimeProperties.Name.ToLower().Contains(filter)))
+            if (configuration.Filters is not null
+                && configuration.Filters.All(filter => queueRuntimeProperties.Name.ToLower().Contains(filter))
+                && (!configuration.NotEmpty || queueRuntimeProperties.ActiveMessageCount + queueRuntimeProperties.DeadLetterMessageCount > 0))
                 queues.Add(Queue.Create(queueRuntimeProperties, configuration.Fields));
         }
 

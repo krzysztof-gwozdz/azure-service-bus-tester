@@ -6,4 +6,5 @@ public record Configuration
     public string Environment { get; init; } = null!;
     public string[]? Filters { get; init; }
     public string[]? Fields { get; init; }
+    public bool NotEmpty { get; init; }
 }

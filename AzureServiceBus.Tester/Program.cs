@@ -15,8 +15,9 @@ var configuration = new Configuration
 {
     FileName = "sandbox",
     Environment = "sandbox",
-    Filters = new[] { "tik" },
-    Fields = new[] { "queue.name", "topic.name", "topic.subscriptions", "subscription.name" }
+    Filters =  new[] { "tik" },
+    Fields = null, //new[] { "queue.name", "topic.name", "topic.subscriptions", "subscription.name" },
+    NotEmpty = true
 };
 
 var data = await GetData();
