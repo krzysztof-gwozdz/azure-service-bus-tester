@@ -11,7 +11,7 @@ public class TopicsRepository : Repository
         var topics = new List<Topic>();
         await foreach (var topicRuntimeProperties in ServiceBusAdministrationClient.GetTopicsRuntimePropertiesAsync(cancellationToken))
         {
-            if (configuration.Filters is not null && configuration.Filters.All(filter => topicRuntimeProperties.Name.ToLower().Contains(filter)))
+            if (configuration.Filters is null || configuration.Filters.All(filter => topicRuntimeProperties.Name.ToLower().Contains(filter)))
             {
                 var subscriptions = await GetSubscriptions(configuration, topicRuntimeProperties.Name);
                 if (subscriptions.Any())
