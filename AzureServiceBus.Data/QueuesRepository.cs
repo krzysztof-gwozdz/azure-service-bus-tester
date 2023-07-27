@@ -16,6 +16,6 @@ public class QueuesRepository : Repository
                 queues.Add(Queue.Create(queueRuntimeProperties, configuration.Fields));
         }
 
-        return queues.ToArray();
+        return queues.OrderBy(queue => queue.Name).ToArray();
     }
 }

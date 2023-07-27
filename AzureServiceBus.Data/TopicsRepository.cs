@@ -19,7 +19,7 @@ public class TopicsRepository : Repository
             }
         }
 
-        return topics.ToArray();
+        return topics.OrderBy(topic => topic.Name).OrderBy(topic => topic.Subscriptions!.First().Name).ToArray();
     }
 
     private async Task<Subscription[]> GetSubscriptions(Configuration configuration, string topicPath)
