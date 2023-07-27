@@ -13,11 +13,11 @@ var connectionStrings = new Dictionary<string, string>
 
 var configuration = new Configuration
 {
-    FileName = "sandbox",
-    Environment = "sandbox",
-    Filters =  new[] { "tik" },
+    FileName = "before",
+    Environment = "test",
+    Filters = null, //new[] { "insta" },
     Fields = null, //new[] { "queue.name", "topic.name", "topic.subscriptions", "subscription.name" },
-    NotEmpty = true
+    NotEmpty = false
 };
 
 var data = await GetData();
